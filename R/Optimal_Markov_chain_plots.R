@@ -103,7 +103,7 @@ for(i in 1:25){
 	for(j in 1:25){
 
 		#Number of player who exited the play - number of players eliminated
-		points_matrix[i, j] <- (states$Players[i] - states$Players[j]) - (states$Out[j] - states$Out[i])
+		points_matrix[i, j] <- max((states$Players[i] - states$Players[j]) - (states$Out[j] - states$Out[i]), 0)
 
 	}
 
@@ -118,9 +118,9 @@ saveRDS(points_matrix, paste(path, 'Data/points_matrix.rds', sep = '/'))
 #####################################################################
 
 #Points
-SLN <- extract_top_9_batters_data("SLN", 2015, 2)
-CLE <- extract_top_9_batters_data("CLE", 2015, 2)
-PHI <- extract_top_9_batters_data("PHI", 2015, 2)
+SLN <- extract_top_9_batters_data("SLN", 2015, 2, markov_data, verif_matrix, verif_matrix_steal)
+CLE <- extract_top_9_batters_data("CLE", 2015, 2, markov_data, verif_matrix, verif_matrix_steal)
+PHI <- extract_top_9_batters_data("PHI", 2015, 2, markov_data, verif_matrix, verif_matrix_steal)
 
 
 SLN_optim <- bruteforce_optim_points(SLN$survival_f, SLN$T_mat, fun = E_points, points_matrix,
@@ -145,9 +145,9 @@ names(info_table) <- c("Team", "Ranking", "E[Points]", "Max(Points)", "Z-Score")
 
 info_table[, Team := c("SLN", "CLE", "PHI")] %>%
 			.[, Ranking := c(1, 15, 30)] %>%
-			.[, "E[Points]" := sapply(c(SLN_optim$runtime_mean, CLE_optim$runtime_mean, PHI_optim$runtime_mean), function(x){round(x, 2)})] %>%
+			.[, "E[Points]" := sapply(c(SLN_optim$points_mean, CLE_optim$points_mean, PHI_optim$points_mean), function(x){round(x, 2)})] %>%
 			.[, "Max(Points)" := sapply(c(SLN_optim$best_points, CLE_optim$best_points, PHI_optim$best_points), function(x){round(x, 2)})] %>%
 			.[, 'Z-Score' := sapply(c(SLN_optim$n_sd_above_mean, CLE_optim$n_sd_above_mean, PHI_optim$n_sd_above_mean), function(x){round(x, 2)})] 
 
 
-grid.table(info_table)
+grid.table(info_table, rows = NULL)
